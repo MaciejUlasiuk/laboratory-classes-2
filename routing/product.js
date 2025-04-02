@@ -11,7 +11,7 @@ productRoutes.get("/add", (request, response) => {
   const filePath = path.join(__dirname, "../views", "add-product.html");
   fs.readFile(filePath, "utf-8", (err, data) => {
     if (err) {
-      getErrorLog(request.url); // Logowanie błędu
+      getErrorLog(request.url); 
       response.status(STATUS_CODE.INTERNAL_SERVER_ERROR).send("<h1>Error loading the page</h1>");
       return;
     }
@@ -20,7 +20,6 @@ productRoutes.get("/add", (request, response) => {
   });
 });
 
-// Obsługa ścieżki /add dla metody POST - zapisuje dane do pliku i przekierowuje na /product/new
 productRoutes.post("/add", (request, response) => {
   const body = [];
   request.on("data", (chunk) => {
@@ -35,11 +34,11 @@ productRoutes.post("/add", (request, response) => {
 
     fs.writeFile("product.txt", formData, (err) => {
       if (err) {
-        getErrorLog(request.url); // Logowanie błędu
+        getErrorLog(request.url); 
         response.status(STATUS_CODE.INTERNAL_SERVER_ERROR).send("<h1>Error saving the product</h1>");
         return;
       }
-      getProcessLog("New product added and saved."); // Logowanie procesu
+      getProcessLog("New product added and saved."); 
       response.status(STATUS_CODE.FOUND);
       response.setHeader("Location", "/product/new");
       response.end();
@@ -47,16 +46,16 @@ productRoutes.post("/add", (request, response) => {
   });
 });
 
-// Obsługa ścieżki /new dla metody GET - odczytuje dane z pliku i renderuje stronę z produktami
+
 productRoutes.get("/new", (request, response) => {
   fs.readFile("product.txt", "utf-8", (err, data) => {
     if (err) {
-      getErrorLog(request.url); // Logowanie błędu
+      getErrorLog(request.url); 
       response.status(STATUS_CODE.NOT_FOUND).send("<h1>No new products available</h1>");
       return;
     }
-    getProcessLog("Rendering new product page."); // Logowanie procesu
-    renderNewProductPage(response, data); // Przekazujemy dane do renderowania strony
+    getProcessLog("Rendering new product page."); 
+    renderNewProductPage(response, data); 
   });
 });
 
