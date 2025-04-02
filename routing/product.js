@@ -1,74 +1,27 @@
-const fileSystem = require("fs");
+const fs = require("fs");
+const path = require("path");
 const { STATUS_CODE } = require("../constants/statusCode");
+const renderNewProductPage = require("../views/renderNewProductPage");
+const { getProcessLog, getErrorLog } = require("../utils/logger"); 
 
-const productRouting = (request, response) => {
-  const { url, method } = request;
+const express = require("express");
+const productRouting = express.Router();
 
-  if (url.includes("add") && method === "GET") {
-    return renderAddProductPage(response);
-  }
-
-  if (url.includes("add") && method === "POST") {
-    return addNewProduct(request, response);
-  }
-
-  if (url.includes("new")) {
-    return renderNewProductPage(response);
-  }
-
-  console.warn(`ERROR: requested url ${url} doesn't exist.`);
-  return;
-};
-
-const renderAddProductPage = (response) => {
-  response.setHeader("Content-Type", "text/html");
-  response.write("<html>");
-  response.write("<head><title>Shop - Add product</title></head>");
-  response.write("<body>");
-  response.write("<h1>Add product</h1>");
-  response.write("<form action='/product/add' method='POST'>");
-  response.write(
-    "<br /><label>Name<br /><input type='text' name='name'></label>"
-  );
-  response.write(
-    "<br /><label>Description<br /><input type='text' name='description'></label>"
-  );
-  response.write("<br /><button type='submit'>Add</button>");
-  response.write("</form>");
-  response.write(
-    "<nav><a href='/'>Home</a><br /><a href='/product/new'>Newest product</a><br /><a href='/logout'>Logout</a></nav>"
-  );
-  response.write("</body>");
-  response.write("</html>");
-
-  return response.end();
-};
-
-const renderNewProductPage = (response) => {
-  fileSystem.readFile("./product.txt", "utf-8", (err, data) => {
-    response.setHeader("Content-Type", "text/html");
-    response.write("<html>");
-    response.write("<head><title>Shop - Newest product</title></head>");
-    response.write("<body>");
-    response.write("<h1>Newest product</h1>");
-    response.write(
-      "<nav><a href='/'>Home</a><br /><a href='/product/add'>Add product</a><br /><a href='/logout'>Logout</a></nav>"
-    );
-
+productRouting.get("/add", (request, response) => {
+  const filePath = path.join(__dirname, "../views", "add-product.html");
+  fs.readFile(filePath, "utf-8", (err, data) => {
     if (err) {
-      response.write("<br /><div>No new products available.</div>");
-    } else {
-      response.write(`<br /><div>New product data - ${splittedData}</div>`);
+      getErrorLog(request.url); // Logowanie błędu
+      response.status(STATUS_CODE.INTERNAL_SERVER_ERROR).send("<h1>Error loading the page</h1>");
+      return;
     }
-
-    response.write("</body>");
-    response.write("</html>");
-
-    return response.end();
+    getProcessLog("Rendering 'Add Product' page."); 
+    response.send(data);
   });
-};
+});
 
-const addNewProduct = (request, response) => {
+// Obsługa ścieżki /add dla metody POST - zapisuje dane do pliku i przekierowuje na /product/new
+productRouting.post("/add", (request, response) => {
   const body = [];
   request.on("data", (chunk) => {
     body.push(chunk);
@@ -77,21 +30,35 @@ const addNewProduct = (request, response) => {
     const parsedBody = Buffer.concat(body).toString();
     const formData = parsedBody.split("&").map((entry) => {
       const [key, value] = entry.split("=");
-
       return `${key}: ${decodeURIComponent(value)}`;
-    });
+    }).join(", ");
 
-    fileSystem.writeFile(
-      "product.txt",
-      `${formData[0]}, ${formData[1]}`,
-      (err) => {
-        response.statusCode = STATUS_CODE.FOUND;
-        response.setHeader("Location", "/product/new");
-
-        return response.end();
+    fs.writeFile("product.txt", formData, (err) => {
+      if (err) {
+        getErrorLog(request.url); // Logowanie błędu
+        response.status(STATUS_CODE.INTERNAL_SERVER_ERROR).send("<h1>Error saving the product</h1>");
+        return;
       }
-    );
+      getProcessLog("New product added and saved."); // Logowanie procesu
+      response.status(STATUS_CODE.FOUND);
+      response.setHeader("Location", "/product/new");
+      response.end();
+    });
   });
-};
+});
 
-module.exports = { productRouting };
+// Obsługa ścieżki /new dla metody GET - odczytuje dane z pliku i renderuje stronę z produktami
+productRouting.get("/new", (request, response) => {
+  fs.readFile("product.txt", "utf-8", (err, data) => {
+    if (err) {
+      getErrorLog(request.url); // Logowanie błędu
+      response.status(STATUS_CODE.NOT_FOUND).send("<h1>No new products available</h1>");
+      return;
+    }
+    getProcessLog("Rendering new product page."); // Logowanie procesu
+    renderNewProductPage(response, data); // Przekazujemy dane do renderowania strony
+  });
+});
+
+module.exports =  productRouting ;
+
