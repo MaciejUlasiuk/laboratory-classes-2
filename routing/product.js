@@ -5,9 +5,9 @@ const renderNewProductPage = require("../views/renderNewProductPage");
 const { getProcessLog, getErrorLog } = require("../utils/logger"); 
 
 const express = require("express");
-const productRouting = express.Router();
+const productRoutes = express.Router();
 
-productRouting.get("/add", (request, response) => {
+productRoutes.get("/add", (request, response) => {
   const filePath = path.join(__dirname, "../views", "add-product.html");
   fs.readFile(filePath, "utf-8", (err, data) => {
     if (err) {
@@ -21,7 +21,7 @@ productRouting.get("/add", (request, response) => {
 });
 
 // Obsługa ścieżki /add dla metody POST - zapisuje dane do pliku i przekierowuje na /product/new
-productRouting.post("/add", (request, response) => {
+productRoutes.post("/add", (request, response) => {
   const body = [];
   request.on("data", (chunk) => {
     body.push(chunk);
@@ -48,7 +48,7 @@ productRouting.post("/add", (request, response) => {
 });
 
 // Obsługa ścieżki /new dla metody GET - odczytuje dane z pliku i renderuje stronę z produktami
-productRouting.get("/new", (request, response) => {
+productRoutes.get("/new", (request, response) => {
   fs.readFile("product.txt", "utf-8", (err, data) => {
     if (err) {
       getErrorLog(request.url); // Logowanie błędu
@@ -60,5 +60,5 @@ productRouting.get("/new", (request, response) => {
   });
 });
 
-module.exports =  productRouting ;
+module.exports =  productRoutes ;
 

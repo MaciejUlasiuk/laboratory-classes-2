@@ -1,12 +1,12 @@
 const express = require('express');
 const { getProcessLog } = require('../utils/logger');
 
-const killRouter = express.Router();
+const killRoutes = express.Router();
 
-killRouter.get('/', (req, res) => {
+killRoutes.get('/', (req, res) => {
     getProcessLog('Serwer zostaje zatrzymany.');
     res.send('Serwer zostaje zamknięty.');
     process.exit(0);
 });
 
-module.exports = killRouter;
+module.exports = killRoutes;

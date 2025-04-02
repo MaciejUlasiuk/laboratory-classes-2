@@ -7,9 +7,9 @@ const express = require("express");
 const bodyParser = require("body-parser")
 const config = require("./config");
 const {getErrorLog,getInfoLog,getProcessLog} = require("./utils/logger")
-const productRouting = require("./routing/product")
+const productRoutes = require("./routing/product")
 const logoutRoutes = require("./routing/logout")
-const killRouter = require("./routing/kill")
+const killRoutes = require("./routing/kill")
 const homeRoutes = require("./routing/home")
 const {STATUS_CODE} = require("./constants/statusCode")
 const {PORT} = require("./config")
@@ -23,9 +23,9 @@ app.use((req, res, next)=>{
   next();
 })
 
-app.use('/product', productRouting);
+app.use('/product', productRoutes);
 app.use('/logout', logoutRoutes);
-app.use('/kill', killRouter);
+app.use('/kill', killRoutes);
 app.use('/', homeRoutes);
 app.use((req, res) => {
   getErrorLog(req.url);
